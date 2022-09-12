@@ -7,3 +7,9 @@ typedef struct student {
   Student* next;
   Student* prev;
 } Student;
+
+void add();
+void remove();
+void printinorder();
+void printreverse();
+
