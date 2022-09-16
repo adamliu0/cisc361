@@ -8,13 +8,8 @@ typedef struct student {
   Student* prev;
 } Student;
 
-typedef struct slist {
-  Student* head;
-  Student* tail;
-} Slist;
-
-void add();
-void remove();
+void add(char* lastname, char* firstname, long studentid, char* yearofstudent, int gradyear);
+void delete(char* lastname);
 void printinorder();
 void printreverse();
 void exit();
