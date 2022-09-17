@@ -89,7 +89,7 @@ void printreverse()
     }
 }
 
-void exit()
+void leave()
 {
     Student *curr;
     printf("Freeing all dynamically allocated memory...\n");
@@ -106,10 +106,13 @@ void exit()
 
 int main()
 {
-    int input;
+    int input = 0;
     printf("Input a number 1-5 to:\n(1) Add a student to the list,\n(2) Delete student(s) from the list\n(3) Print the list from beginning to end\n(4) Print the list from end to beginning\n(5) Exit the program");
-    fgets(input, sizeof(int), stdin);
-    switch(input) {
+    scanf("%d", input);
+    while (input != 5)
+    {
+        switch (input)
+        {
         case 1:
             char lastname[BUFFERSIZE];
             char firstname[BUFFERSIZE];
@@ -130,5 +133,6 @@ int main()
             free(lastname);
             free(firstname);
             free(yearofstudent);
+        }
     }
 }
