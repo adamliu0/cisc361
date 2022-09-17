@@ -92,7 +92,6 @@ void printreverse()
 void leave()
 {
     Student *curr;
-    printf("Freeing all dynamically allocated memory...\n");
     while (head != NULL)
     {
         curr = head;
@@ -107,32 +106,78 @@ void leave()
 int main()
 {
     int input = 0;
-    printf("Input a number 1-5 to:\n(1) Add a student to the list,\n(2) Delete student(s) from the list\n(3) Print the list from beginning to end\n(4) Print the list from end to beginning\n(5) Exit the program");
-    scanf("%d", input);
+    char buffer[BUFFERSIZE];
+    char lastname[BUFFERSIZE];
+    char firstname[BUFFERSIZE];
+    long studentid;
+    char yearofstudent[BUFFERSIZE];
+    int gradyear;
+
     while (input != 5)
     {
+        printf("Input a number 1-5 to:\n(1) Add a student to the list,\n(2) Delete student(s) from the list\n(3) Print the list from beginning to end\n(4) Print the list from end to beginning\n(5) Exit the program\n");
+        fgets(buffer, BUFFERSIZE, stdin);
+        input = atoi(buffer);
+
         switch (input)
         {
         case 1:
-            char lastname[BUFFERSIZE];
-            char firstname[BUFFERSIZE];
-            long studentid;
-            char yearofstudent[BUFFERSIZE];
-            int gradyear;
-            printf("(1) Adding student...\nInput student last name:\n");
+            printf("(1) Adding student...\n");
+
+            // read last name from stdin
+            printf("Input student last name:\n");
             fgets(lastname, BUFFERSIZE, stdin);
+            lastname[strlen(lastname) - 1] = '\0';
+
+            // read first name from stdin
             printf("Input student first name:\n");
             fgets(firstname, BUFFERSIZE, stdin);
+            firstname[strlen(firstname) - 1] = '\0';
+
+            // read student ID from stdin
             printf("Input student ID:\n");
-            scanf("%ld", studentid);
+            fgets(buffer, BUFFERSIZE - 1, stdin);
+            studentid = (long) atoi(buffer);
+
+            // read student year from stdin
             printf("Input year of student:\n");
             fgets(yearofstudent, BUFFERSIZE, stdin);
+            yearofstudent[strlen(yearofstudent) - 1] = '\0';
+
+            // read graduation year from stdin
             printf("Input graduation year:\n");
-            scanf("%d", gradyear);
+            fgets(buffer, BUFFERSIZE, stdin);
+            gradyear = atoi(buffer);
+
             add(lastname, firstname, studentid, yearofstudent, gradyear);
-            free(lastname);
-            free(firstname);
-            free(yearofstudent);
+
+            break;
+        case 2:
+            printf("(2) Deleting student from list...\n");
+
+            // read last name from stdin
+            printf("Input student last name:\n");
+            fgets(lastname, BUFFERSIZE, stdin);
+            lastname[strlen(lastname) - 1] = '\0';
+
+            delete(lastname);
+            break;
+        case 3:
+            printf("Printing list from beginning to end...\n");
+            printinorder();
+            break;
+        case 4:
+            printf("Printing list from end to beginning...\n");
+            printreverse();
+            break;
+        case 5:
+            printf("Preparing to exit by freeing all dynamically allocated memory...\n");
+            leave();
+            break;
+        default:
+            printf("Invalid input\n");
+            break;
         }
+
     }
 }
