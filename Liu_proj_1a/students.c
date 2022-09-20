@@ -2,11 +2,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#define BUFFERSIZE 128
+#define BUFFERSIZE 128 //maximum buffer size
 
+//initializing a head and tail for the doubly linked list
 Student *head = NULL;
 Student *tail = NULL;
 
+//function that takes data values for a new student and adds as the tail of the doubly linked list
 void add(char *lastname, char *firstname, long studentid, char *yearofstudent, int gradyear)
 {
     Student *newNode = malloc(sizeof(Student));
@@ -32,6 +34,7 @@ void add(char *lastname, char *firstname, long studentid, char *yearofstudent, i
     tail = newNode;
 }
 
+//deletes a student off the doubly linked list by searching through the list by last name and deleting it
 void delete (char *lastname)
 {
     if (head == NULL && tail == NULL)
@@ -69,6 +72,7 @@ void delete (char *lastname)
     }
 }
 
+//prints the doubly linked list of students in order from head to tail
 void printinorder()
 {
     Student *curr = head;
@@ -79,6 +83,7 @@ void printinorder()
     }
 }
 
+//prints the doublt linked list of students in reverse order from tail to head
 void printreverse()
 {
     Student *curr = tail;
@@ -89,6 +94,7 @@ void printreverse()
     }
 }
 
+//frees all dynamically allocated memory to prepare program exit
 void leave()
 {
     Student *curr;
@@ -103,6 +109,7 @@ void leave()
     }
 }
 
+//main method that prompts the user to select input numbers 1-5 to add, delete, print in order, print in reverse, or leave respectively.
 int main()
 {
     int input = 0;
