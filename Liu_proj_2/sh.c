@@ -10,6 +10,7 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include "sh.h"
+#define BUFFERSIZE 1028
 
 int sh( int argc, char **argv, char **envp )
 {
@@ -42,7 +43,7 @@ int sh( int argc, char **argv, char **envp )
   while ( go )
   {
     /* print your prompt */
-
+    
     /* get command line and process */
 
     /* check for each built in command and implement */
@@ -63,17 +64,70 @@ char *which(char *command, struct pathelement *pathlist )
 {
    /* loop through pathlist until finding command and return it.  Return
    NULL when not found. */
-
+   char *buffer = malloc(BUFFERSIZE);
+   while(pathlist) {
+    sprintf(buffer, "%s:%s", pathlist->element, command);
+    if(access(buffer, X_OK) == 0) {
+      return buffer;
+    }
+    pathlist = pathlist->next;
+   }
+   free(buffer);
+   return NULL;
 } /* which() */
 
 char *where(char *command, struct pathelement *pathlist )
 {
   /* similarly loop through finding all locations of command */
+  char *buffer = malloc(BUFFERSIZE);
+   while(pathlist) {
+    sprintf(buffer, "%s:%s", pathlist->element, command);
+    if(access(buffer, F_OK) == 0) {
+      return buffer;
+    }
+    pathlist = pathlist->next;
+   }
+   free(buffer);
+   return NULL;
 } /* where() */
 
 void list ( char *dir )
 {
   /* see man page for opendir() and readdir() and print out filenames for
   the directory passed */
+  DIR *d;
+  struct dirent *dn;
+  d = opendir(dir);
+  if(d) {
+    while(dn = readdir(d)) {
+      printf("%s\n", dn->d_name);
+    }
+  }
+  else {
+    perror(dir);
+  }
 } /* list() */
 
+void pwd() {
+  char buffer[BUFFERSIZE];
+  getcwd(buffer, sizeof(buffer));
+  printf("%s\n", buffer);
+}
+
+void printenv(char **envp) {
+  char **env = envp;
+  if(sizeof(env) == 0) {
+    while(*env ) {
+      printf("%s\n", env);
+      env++;
+    }
+  }
+  else if(sizeof(env) == 1) {
+    if(env) {
+      printf("%s\n", env);
+    }
+    else {
+      printf("Environment variable does not exist");
+    }
+  }
+}
