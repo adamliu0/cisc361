@@ -8,6 +8,7 @@
 #include <dirent.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 #include <signal.h>
 #include "sh.h"
 #define BUFFERSIZE 1028
@@ -91,6 +92,52 @@ char *where(char *command, struct pathelement *pathlist )
    return NULL;
 } /* where() */
 
+void cd(char *owd, char *pwd, char *homedir, char **args, int argsct) {  
+  char buffer[BUFFERSIZE];
+  if (argsct == 2) {
+    //chdir to directory previously in
+    if (strcmp(args[1], "-") == 0) {
+      chdir(pwd);
+      strcpy(pwd, owd);
+      getcwd(buffer, sizeof(buffer));
+      strcpy(owd, buffer);
+    }
+    //chdir to directory
+    else {
+      struct stat statbuffer;
+      int direxists = stat(args[1], &statbuffer);
+      if ( direxists != -1 && S_ISDIR( statbuffer.st_mode ) ) {
+        strcpy(pwd, owd);
+        chdir(args[1]);
+        getcwd(buffer, sizeof(buffer));
+        strcpy(owd, buffer);
+      } else {
+        printf("%s is not a directory\n", args[1]);
+      }
+    }    
+  }
+  
+  // chdir to home directory
+  else if (argsct == 1) {
+    strcpy(pwd, owd);
+    chdir(homedir);
+    getcwd(buffer, sizeof(buffer));
+    strcpy(owd, buffer);
+  }
+
+  // too many arguments
+  else {
+    printf("Too many arguments entered\n");
+  }
+} /* cd() */
+
+void pwd() {
+  char buffer[BUFFERSIZE];
+  getcwd(buffer, sizeof(buffer));
+  printf("%s\n", buffer);
+} /* pwd() */
+
+
 void list ( char *dir )
 {
   /* see man page for opendir() and readdir() and print out filenames for
@@ -108,26 +155,39 @@ void list ( char *dir )
   }
 } /* list() */
 
-void pwd() {
-  char buffer[BUFFERSIZE];
-  getcwd(buffer, sizeof(buffer));
-  printf("%s\n", buffer);
-}
-
-void printenv(char **envp) {
-  char **env = envp;
-  if(sizeof(env) == 0) {
-    while(*env ) {
-      printf("%s\n", env);
-      env++;
-    }
-  }
-  else if(sizeof(env) == 1) {
-    if(env) {
-      printf("%s\n", env);
+void prompt(char *command, char *p) {
+    char buffer[BUFFERSIZE];
+    int len;
+    if (command == NULL) {
+        command = malloc(sizeof(char) * PROMPTMAX);
+        printf("Input new prompt prefix: ");
+        if (fgets(buffer, BUFFERSIZE, stdin) != NULL) {
+            len = (int)strlen(buffer);
+            buffer[len - 1] = '\0';
+            strcpy(command, buffer);
+        }
+        strcpy(p, command);
+        free(command);
     }
     else {
-      printf("Environment variable does not exist");
+        strcpy(p, command);
     }
+} /* prompt() */
+
+void printenv(char **envp) {
+  for(int i = 0; envp[i] != NULL; i++) {
+    printf("%s\n", envp[i]);
   }
-}
+} /* printenv() */
+
+void setenvi(char **args, int argsct) {
+  if (argsct == 1) {
+    printenv(args);
+  } else if (argsct == 2) {
+    setenv(args[1], "", 1);
+  } else if (argsct == 3) {
+    setenv(args[1], args[2], 1);
+  } else {
+    fprintf(stderr, "setenv can only take 2 arguments\n");
+  }
+} /* setenv() */
