@@ -4,15 +4,32 @@
 
 void sig_handler(int signal); 
 
-int main( int argc, char **argv, char **envp )
-{
+int main( int argc, char **argv, char **envp ) {
+  signal(SIGINT, sig_handler);
+  signal(SIGTSTP, sig_handler);
+  signal(SIGTERM, sig_handler);
+  signal(EOF, sig_handler);
   /* put signal set up stuff here */
-
   return sh(argc, argv, envp);
 }
 
-void sig_handler(int signal)
-{
+void sig_handler(int signal) {
   /* define your signal handler */
+  if (signal == SIGINT) {
+    printf("\nCtrl-C\n");
+    if (getpid() == 0) {
+      kill(pid, 15);
+      printf("Killed");
+    }
+    else {
+      printf("Signal ignored");
+    }
+  }
+  else if (signal == SIGTSTP)
+    printf("\nCtrl-Z\n");
+  else if (signal == SIGTERM)
+    printf("\nKill\n");
+  else if (signal == EOF)
+    printf("\nCtrl-D\n");
+  else return;
 }
-
