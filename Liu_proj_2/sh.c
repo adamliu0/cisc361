@@ -44,9 +44,9 @@ int sh( int argc, char **argv, char **envp )
   while ( go )
   {
     /* print your prompt */
-    
+    printf("%s [%s]>", prompt, pwd);
     /* get command line and process */
-
+    argsct = getinput(args);
     /* check for each built in command and implement */
 
      /*  else  program to exec */
@@ -191,3 +191,38 @@ void setenvi(char **args, int argsct) {
     fprintf(stderr, "setenv can only take 2 arguments\n");
   }
 } /* setenv() */
+
+void clearinput(char **input) {
+  for (int i = 0; i < MAXARGS; i++) {
+    if (input[i] != NULL) {
+      free( *(input+i) );
+      input[i] = NULL;
+    }
+  }
+}/* clearinput() */
+
+int getinput(char **input) {
+  // clear input
+  clearinput(input);
+  // get input
+  char buffer[BUFFERSIZE];
+  char *checkEOF;
+  checkEOF = fgets(buffer, 127, stdin);
+  if(checkEOF == NULL) {
+    printf("\nEOF Detected\n");
+    return -1;
+  }
+  buffer[strlen(buffer) - 1] = '\0';
+  
+  // chop strings and copy to args
+  char *token;
+  token = strtok(buffer, " ");
+  int argsct;
+  for(int i = 0; token != NULL && i < MAXARGS; i++) {
+    input[i] = malloc( (1 + strlen(token) ) * sizeof(char));
+    strcpy(input[i], token);
+    token = strtok(NULL, " ");
+    argsct = i;
+  }
+  return argsct;
+} /* getinput() */
