@@ -24,7 +24,6 @@ int sh( int argc, char **argv, char **envp )
   struct passwd *password_entry;
   char *homedir;
   struct pathelement *pathlist;
-
   uid = getuid();
   password_entry = getpwuid(uid);               /* get passwd info */
   homedir = password_entry->pw_dir;		/* Home directory to start
@@ -41,6 +40,10 @@ int sh( int argc, char **argv, char **envp )
 
   /* Put PATH into a linked list */
   pathlist = get_path();
+  
+  /* signal handlers */
+  signal(SIGINT, sighandler);
+  signal(SIGTSTP, sighandler);
 
   while ( go )
   {
@@ -358,5 +361,28 @@ void globglob(int argsct, char **args, int index) {
       strcpy(args[index+i], globbuffer.gl_pathv[i]);
     }
     globfree(&globbuffer);
+  }
+}
+
+/* signal handler*/
+void sighandler(int sig) {
+  if(sig == SIGINT) {
+    signal(SIGINT, sighandler);
+    printf("\n Cannot be terminated using Ctrl+C\n");
+    fflush(stdout);
+}
+  else if(sig == SIGTSTP){
+    signal(SIGTSTP, sighandler);
+    printf("\n Cannot be terminated using Ctrl+Z\n");
+    fflush(stdout);
+  }
+}
+/* child signal handler*/
+void childhandler(int sig) {
+  if(sig = SIGINT) {
+    exit(128 + SIGINT);
+  }
+  else if(sig == SIGTSTP) {
+    exit(128 + SIGTSTP);
   }
 }
