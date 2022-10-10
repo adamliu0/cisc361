@@ -10,6 +10,7 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <signal.h>
+#include <glob.h>
 #include "sh.h"
 #define BUFFERSIZE 1028
 
@@ -49,14 +50,117 @@ int sh( int argc, char **argv, char **envp )
     argsct = getinput(args);
     /* check for each built in command and implement */
 
-     /*  else  program to exec */
-    {
-       /* find it */
-       /* do fork(), execve() and waitpid() */
-
-      /* else */
-        /* fprintf(stderr, "%s: Command not found.\n", args[0]); */
+    /* exit */
+    if (argsct == -1 || strcmp(args[0], "exit") == 0) {
+      printf("Freeing dynamically allocated memory to prepare for exit...\n");
+      free(pathlist->element);
+      struct pathelement *temp;
+      while (pathlist != NULL) {
+        temp = pathlist;
+        pathlist = pathlist->next;
+        free(temp);
+      }
+      clearinput(args);
+      free(prompt);
+      free(args);
+      free(pwd);
+      free(owd);
+      exit(1);
     }
+
+    /* which */
+    else if (strcmp(args[0], "which") == 0) {
+      printf("which\n");
+      if (args[1] == NULL) {
+        printf("Error: which requires at least 1 argument\n");
+      } else {
+        if (which(args[1], pathlist)) {
+          printf("Path found: %s\n", which(args[1], pathlist));
+        } else {
+          printf("%s: not found\n", args[1]);
+        }
+      }
+    }
+
+    /* where */
+    else if (strcmp(args[0], "where") == 0) {
+      printf("where\n");
+      if (args[1] == NULL) {
+        printf("Error: where requires at least 1 argument\n");
+      } else {
+        if (where(args[1], pathlist)) {
+          printf("Path found: %s\n", where(args[1], pathlist));
+        } else {
+          printf("%s: not found\n", args[1]);
+        }
+      }
+    }
+
+    /* cd */
+    else if (strcmp(args[0], "cd") == 0) {
+      printf("cd\n");
+      cd(owd, pwd, homedir, args, argsct);
+    }
+
+    /* pwd */
+    else if (strcmp(args[0], "pwd") == 0) {
+      printf("pwd\n");
+      pwdfunc();
+    }
+
+    /* list */
+    else if (strcmp(args[0], "list") == 0) {
+      printf("list\n");
+      list(owd);
+    }
+
+    /* pid */
+    else if (strcmp(args[0], "pid") == 0) {
+        printf("pid\n");
+        ppid();
+    }
+
+    /* kill */
+    else if (strcmp(args[0], "kill") == 0) {
+      printf("kill\n");
+      int killed = 1;
+      if (argsct == 2) {
+        killed = kill(atoi(args[1]), SIGTERM);
+      }
+      else if (argsct == 3) {
+        if (args[1][0] == '-') {
+          int signal = atoi(args[1] + 1);
+          killed = kill(atoi(args[2]), signal);
+        }
+        else if (args[2][0] == '-') {
+          int signal = atoi(args[2] + 1);
+          killed = kill(atoi(args[1]), signal);
+        }
+      }
+      if (killed) {
+        perror("Error with kill");
+      }
+    }
+
+    /* prompt */
+    else if (strcmp(args[0], "prompt") == 0) {
+      printf("prompt\n");
+      promptfunc(command, p);
+    }
+
+    /* printenv*/
+    else if (strcmp(args[0], "printenv") == 0) {
+      printf("printenv\n");
+      printenv(args);
+    }
+
+    /* setenv */
+    else if (strcmp(args[0], "setenv") == 0) {
+      printf("setenv\n");
+      setenvi(args, argsct);
+    }
+
+
   }
   return 0;
 } /* sh() */
@@ -131,7 +235,7 @@ void cd(char *owd, char *pwd, char *homedir, char **args, int argsct) {
   }
 } /* cd() */
 
-void pwd() {
+void pwdfunc() {
   char buffer[BUFFERSIZE];
   getcwd(buffer, sizeof(buffer));
   printf("%s\n", buffer);
@@ -155,7 +259,12 @@ void list ( char *dir )
   }
 } /* list() */
 
-void prompt(char *command, char *p) {
+void ppid()
+{
+    printf("PID: %d\n", getpid());
+} /* pid() */
+
+void promptfunc(char *command, char *p) {
     char buffer[BUFFERSIZE];
     int len;
     if (command == NULL) {
@@ -226,3 +335,28 @@ int getinput(char **input) {
   }
   return argsct;
 } /* getinput() */
+
+void globglob(int argsct, char **args, int index) {
+  glob_t globbuffer;
+  if (argsct == 1) {
+    globfree(&globbuffer);
+  } 
+  else {
+    int globstatus = glob(args[index], 0, NULL, &globbuffer);
+    if (globstatus == GLOB_NOSPACE ) {
+      printf("GLOB_NOSPACE\n");
+    }
+    if (globstatus == GLOB_ABORTED) {
+      printf("GLOB_ABORTED\n");
+    }
+    if (globstatus == GLOB_NOMATCH) { 
+      printf("GLOB_NOMATCH\n");
+    }
+    free(args[index]);
+    for (int i = 0; globbuffer.gl_pathv[i] && (index+i) < MAXARGS; i++) {
+      args[index+i] = malloc( (strlen(globbuffer.gl_pathv[i]) + 1) * sizeof(char));
+      strcpy(args[index+i], globbuffer.gl_pathv[i]);
+    }
+    globfree(&globbuffer);
+  }
+}
