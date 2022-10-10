@@ -14,8 +14,7 @@ void printenv(char **envp);
 void setenvi(char **args, int argsct);
 void clearinput(char **input);
 int getinput(char **input);
-
-void sig_handler(int signal); 
+void sighandler(int signal); 
 
 #define PROMPTMAX 32
 #define MAXARGS 10

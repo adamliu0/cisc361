@@ -163,7 +163,87 @@ int sh( int argc, char **argv, char **envp )
       setenvi(args, argsct);
     }
 
+    else
+		{ // external command
+			if ((pid = fork()) < 0)
+			{
+				printf("fork error");
+			}
+			else if (pid == 0)
+			{ /* child */
+				// an array of arguments for execve()
+				char *execargs[MAXARGS];
+				glob_t paths;
+				int csource, j;
+				char **p;
+				struct pathelement *path = get_path();
+				char *cmdPath;
 
+				execargs[0] = malloc(argsct + 1);
+				strcpy(execargs[0], args[0]); // copy command
+				j = 1;
+				for (i = 1; i < argsct; i++) // check arguments
+				{
+					if (strchr((char*)args[i], '*') != NULL)
+					{ // wildcard
+						csource = glob(arg+i, 0, NULL, &paths);
+						if (csource == 0)
+						{
+							for (p = paths.gl_pathv; *p != NULL; ++p)
+							{
+								execargs[j] = malloc(strlen(*p) + 1);
+								strcpy(execargs[j], *p);
+								j++;
+							}
+
+							globfree(&paths);
+						}
+					}
+					else // flags and directories
+					{
+						execargs[j] = malloc(strlen(args[i]));
+						strcpy(execargs[j], args[i]);
+						j++;
+					}
+				}
+				execargs[j] = NULL;
+
+                if (strncmp(args[0], "/", 1) == 0)
+                {
+                    if (access(args[0], X_OK) == 0)
+                    {
+						i = 0;
+						for (i = 0; i < j; i++)
+							printf("exec arg [%s]\n", execargs[i]);
+
+						execve(execargs[0], execargs, NULL);
+                        printf("couldn't execute: %s\n", args[0]);
+                    }
+					else
+					{
+						perror(args[0]);
+					}
+                }
+                else
+                {
+					i = 0;
+					for (i = 0; i < j; i++)
+						printf("exec arg [%s]\n", execargs[i]);
+
+					cmdPath = which(execargs[0], path);
+                    execve(cmdPath, execargs, NULL);
+					perror(args[0]);
+				}
+                exit(127);
+			}
+
+			/* parent */
+			if ((pid = waitpid(pid, &status, 0)) < 0)
+				printf("waitpid error");
+			
+            if (WIFEXITED(status))
+                printf("child terminates with (%d)\n", WEXITSTATUS(status));
+		}
   }
   return 0;
 } /* sh() */
