@@ -7,7 +7,9 @@
 #include "proc.h"
 #include "spinlock.h"
 
-struct {
+// ptable struct
+struct
+{
   struct spinlock lock;
   struct proc proc[NPROC];
 } ptable;
@@ -342,14 +344,13 @@ scheduler(void)
       c->proc = p;
       switchuvm(p);
       p->state = RUNNING;
-
+      cprintf("process [%s:%d] is running\n", p->name, p->pid);
       swtch(&(c->scheduler), p->context);
       switchkvm();
 
       // Process is done running for now.
       // It should have changed its p->state before coming back.
       c->proc = 0;
-      cprintf("process [%s:%d] is running\n", p->name, p->pid);
     }
     release(&ptable.lock);
 
@@ -532,4 +533,19 @@ procdump(void)
     }
     cprintf("\n");
   }
+}
+
+int crsp(){
+  struct proc *p;
+  acquire(&ptable.lock);
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->state == RUNNING){
+      cprintf("Process Name: %s, PID: %d, State: RUNNING", p->name, p->pid);
+    }
+    else if(p->state == SLEEPING){
+      cprintf("Process Name: %s, PID: %d, State: SLEEPING", p->name, p->pid);
+    }
+  }
+  release(&ptable.lock);
+  return 0;
 }
